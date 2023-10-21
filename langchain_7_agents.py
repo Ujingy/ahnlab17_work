@@ -26,6 +26,9 @@ from langchain.tools.python.tool import PythonREPLTool
 from langchain.python import PythonREPL
 from langchain.chat_models import ChatOpenAI
 
+import warnings
+warnings.filterwarnings('ignore')
+
 
 llm = ChatOpenAI(temperature=0, model=llm_model)
 

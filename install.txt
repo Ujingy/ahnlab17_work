@@ -6,3 +6,14 @@ pip install --upgrade pandas
 pip install --upgrade wikipedia
 pip install --upgrade DateTime
 pip install --upgrade numexpr
+pip install --upgrade google-search-results
+pip install --upgrade faiss-gpu # For CUDA 7.5+ Supported GPU's.
+# OR
+pip install --upgrade faiss-cpu # For CPU Installation
+pip install --upgrade sentence_transformers
+pip install --upgrade unstructured
+pip install --upgrade pdf2image
+pip install --upgrade pdfminer.six
+pip install --upgrade pypdf
+pip install --upgrade yt_dlp
+pip install --upgrade pydub

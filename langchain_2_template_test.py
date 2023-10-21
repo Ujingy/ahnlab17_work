@@ -46,14 +46,15 @@ def main() -> None:
 
   chatchain = LLMChain(llm=chat, prompt=chat_prompt, verbose=True)
   text = """
-Exclusive: US will transfer weapons seized from Iran to Ukraine
+독점: 미국, 이란에서 압수한 무기를 우크라이나로 이송할 예정
 
-
-The US will transfer thousands of seized Iranian weapons and rounds of ammunition to Ukraine, in a move that could help to alleviate some of the critical shortages facing the Ukrainian military as it awaits more money and equipment from the US and its allies, US officials said.
+미국 당국자들에 따르면, 미국은 이란에서 압수한 수천 개의 무기와 탄약을 우크라이나로 이송할 예정입니다. 이러한 조치는 우크라이나
+ 군대가 미국과 동맹국으로부터 더 많은 자금과 장비를 기다리는 동안, 우크라이나 군대가 직면한 심각한 부족 상황을 완화하는 데 도움
+이 될 수 있습니다.
 """
 
   print_start()
-  response = chatchain.run(input_language="English", output_language="Korean", text=text)
+  response = chatchain.run(input_language="Korean", output_language="English", text=text)
 
   print_end()
 

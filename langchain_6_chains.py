@@ -35,6 +35,9 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.chains import LLMChain
 
+import warnings
+warnings.filterwarnings('ignore')
+
 
 llm = ChatOpenAI(temperature=0.9, model=llm_model)
 
