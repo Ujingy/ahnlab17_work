@@ -38,48 +38,19 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.schema.embeddings import Embeddings
 import numpy as np
 
-from wcwidth import wcswidth
-
-def align_text(text, width, align='left', fillchar=' '):
-    text_width = wcswidth(text)
-    padding = width - text_width
-    if padding <= 0:
-       return text
-
-    if align == 'right':
-        return fillchar * padding + text
-    elif align == 'center':
-        left_padding = padding // 2
-        right_padding = padding - left_padding
-        return fillchar * left_padding + text + fillchar * right_padding
-    else:  # left by default
-        return text + fillchar * padding
-
 
 def test_embed(embedding : Embeddings) -> None:
-  sentences = [
-    "i like dogs",
-    "i like canines",
-    "나는 개를 좋아한다",
-    "J'aime les chiens",
-    "私は犬が好きです",
-    "Я люблю собак",
-    "ฉันชอบหมา",
-    "the weather is ugly outside"
-    ]
-  embeddings = []
+  sentence1 = "i like dogs"
+  sentence2 = "i like canines"
+  sentence3 = "the weather is ugly outside"
 
-  for sentence in sentences:
-    embeddings.append(embedding.embed_query(sentence))
+  embedding1 = embedding.embed_query(sentence1)
+  embedding2 = embedding.embed_query(sentence2)
+  embedding3 = embedding.embed_query(sentence3)
 
-  for idx, em1 in enumerate(embeddings) :
-    for idx2, em2 in enumerate(embeddings) :
-      if idx >= idx2:
-        continue
-      v = np.dot(em1, em2)
-      l = f"'{sentences[idx]}',"
-      r = f"'{sentences[idx2]}'"
-      print(f"np.dot({align_text(l, 22)} {align_text(r, 30)} => {v}")
+  print(f"np.dot(embedding1, embedding2) => {np.dot(embedding1, embedding2)}")
+  print(f"np.dot(embedding1, embedding3) => {np.dot(embedding1, embedding3)}")
+  print(f"np.dot(embedding2, embedding3) => {np.dot(embedding2, embedding3)}")
   return None
 
 
@@ -114,15 +85,15 @@ def test_pdf_vectordb() -> None:
 
 
 def test_csv_vectordb() -> None:
-  vectordb : VectorStore = load_vectordb_from_file("data/OutdoorClothingCatalog_1000.csv")
+  vectordb : VectorStore = load_vectordb_from_file("data/lipstick_data.csv")
 
-  question = "A shirt that is wrinkle-resistant and breathable"
+  question = "Lipstick that applies well and lasts long"
   docs = vectordb.similarity_search(question,k=3)
 
   print(f"len(docs)=>{len(docs)}")
   print(f"docs[0].page_content=>{docs[0].page_content}")
 
-  question = "주름이 잘 잡히지 않으면서 통기성이 좋은 셔츠"
+  question = "색 발림이 좋고 지속성이 좋은 립스틱"
   docs = vectordb.similarity_search(question,k=3)
 
   print(f"len(docs)=>{len(docs)}")

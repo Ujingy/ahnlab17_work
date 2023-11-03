@@ -27,13 +27,9 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter, CharacterTex
 # `RecursiveCharacterTextSplitter` is recommended for generic text.
 
 
-some_text = """When writing documents, writers will use document structure to group content. \
-This can convey to the reader, which idea's are related. For example, closely related ideas \
-are in sentances. Similar ideas are in paragraphs. Paragraphs form a document. \n\n  \
-Paragraphs are often delimited with a carriage return or two carriage returns. \
-Carriage returns are the "backslash n" you see embedded in this string. \
-Sentences have a period at the end, but also, have a space.\
-and words are separated by space."""
+some_text = """Ten years ago Mandarin, the mother tongue of most Chinese, was being hyped as the language of the future. In 2015 the administration of Barack Obama called for 1m primary- and secondary-school students in America to learn it by 2020. In 2016 Britain followed suit, encouraging kids to study “one of the most important languages for the uk’s future prosperity”. Elsewhere, too, there seemed to be a growing interest in Mandarin, as China’s influence and economic heft increased. So why, a decade later, does Mandarin-learning appear to have declined in many places?
+
+Good numbers are tough to come by in some countries, but the trend is clear among university students in the English-speaking world. In America, for example, the number taking Mandarin courses peaked around 2013. From 2016 to 2020 enrolment in such courses fell by 21%, according to the Modern Language Association, which promotes language study. In Britain the number of students admitted to Chinese-studies programmes dropped by 31% between 2012 and 2021, according to the Higher Education Statistics Association, which counts such things (though it does not count those who take Mandarin as part of other degrees)."""
 
 
 def test_text_split() -> None:

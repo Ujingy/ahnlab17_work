@@ -23,12 +23,15 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 openai.organization = os.getenv("ORGANIZATION")
 sys.path.append(os.getenv("PYTHONPATH"))
 llm_model = "gpt-3.5-turbo"
-PDF_FILE = "./data/프리랜서 가이드라인 (출판본).pdf"
-CSV_FILE = "data/OutdoorClothingCatalog_1000.csv"
+PDF_FREELANCER_GUIDELINES_FILE = "./data/프리랜서 가이드라인 (출판본).pdf"
+CSV_OUTDOOR_CLOTHING_CATALOG_FILE = "data/OutdoorClothingCatalog_1000.csv"
 
 from langchain.vectorstores import FAISS
 from langchain.vectorstores import Chroma
-from langchain.schema.vectorstore import VectorStore
+from langchain.schema.vectorstore import (
+  VectorStore,
+  VectorStoreRetriever
+)
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 from utils import (
@@ -39,7 +42,9 @@ from utils import (
   load_vectordb_from_file,
   get_vectordb_path_by_file_path
   )
-
+from langchain.chains.router import MultiRetrievalQAChain
+from langchain.llms import OpenAI
+from langchain.embeddings.openai import OpenAIEmbeddings
 
 import re
 
@@ -78,58 +83,64 @@ def print_result(result: Any) -> None:
 llm = ChatOpenAI(model_name=llm_model, temperature=0)
 
 
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
-from langchain.prompts.prompt import PromptTemplate
 
-_template = """Given the following conversation and a follow up \
-  question, rephrase the follow up question to be a standalone \
-  question, in its original language.
+def get_personal_retriever() -> VectorStoreRetriever:
+  personal_texts = [
+    "내 이름은 홍길동입니다.",
+    "내가 제일 좋아하는 색은 보라색입니다.",
+    "내 꿈은 최고의 인공지능 활용 어플리케이션 개발자가 되는 것입니다.",
+    "내 고향은 제주도입니다.",
+    "나는 1972년에 태어났습니다.",
+  ]
+  personal_retriever = FAISS.from_texts(personal_texts, OpenAIEmbeddings()).as_retriever()
+  if not isinstance(personal_retriever, VectorStoreRetriever):
+    raise ValueError("personal_retriever is not VectorStoreRetriever")
+  return personal_retriever
 
-Chat History:
-{chat_history}
-Follow Up Input: {question}
-Standalone question:"""
-CONDENSE_QUESTION_PROMPT = PromptTemplate.from_template(_template)
 
+def get_freelancer_guidelines() -> VectorStoreRetriever:
+  retriever = load_vectordb_from_file(PDF_FREELANCER_GUIDELINES_FILE).as_retriever()
+  if not isinstance(retriever, VectorStoreRetriever):
+    raise ValueError("it's not VectorStoreRetriever")
+  return retriever
 
-def get_qa(vectordb) -> ConversationalRetrievalChain:
-  memory = ConversationBufferMemory(
-    memory_key="chat_history",
-    output_key='answer',
-    return_messages=True
-  )
-  retriever=vectordb.as_retriever()
-  qa = ConversationalRetrievalChain.from_llm(
-      llm,
-      retriever=retriever,
-      return_source_documents=True,
-      return_generated_question=True,
-      max_tokens_limit=4097,
-      memory=memory,
-      # 추가된 영역
-      condense_question_prompt =  CONDENSE_QUESTION_PROMPT
-  )
-  return qa
+def get_outdoor_clothing_catalog() -> VectorStoreRetriever:
+  retriever = load_vectordb_from_file(CSV_OUTDOOR_CLOTHING_CATALOG_FILE).as_retriever()
+  if not isinstance(retriever, VectorStoreRetriever):
+    raise ValueError("it's not VectorStoreRetriever")
+  return retriever
 
 
 
+def get_chain() :
+  retriever_infos = [
+    {
+        "name": "freelancer guidelines",
+        "description": "Good for answering questions about the different things you need to know about being a freelancer",
+        "retriever": get_freelancer_guidelines()
+    },
+    {
+        "name": "outdoor clothing catalog",
+        "description": "Good for answering questions about outdoor clothing names and features",
+        "retriever": get_outdoor_clothing_catalog()
+    },
+    {
+        "name": "personal",
+        "description": "Good for answering questions about me",
+        "retriever": get_personal_retriever()
+    }
+  ]
+  chain = MultiRetrievalQAChain.from_retrievers(OpenAI(), retriever_infos, verbose=True)
+  return chain
 
-def test_memory(vectordb, questions, is_debug=False)-> None:
-  langchain.is_debug = is_debug
-  qa = get_qa(vectordb)
-  for q in questions:
-    result = qa({"question": q})
-    print('')
-    print_result(result)
-  langchain.is_debug = False
 
 
 
-
-def chat_qa(vectordb, is_debug=False) -> None:
+def chat_qa(is_debug=False) -> None:
   console = ConsoleInput(basic_prompt='% ')
-  qa = get_qa(vectordb)
+  busy_indicator = BusyIndicator().busy(True, "vectordb를 로딩중입니다 ")
+  qa = get_chain()
+  busy_indicator.stop()
 
 
   while True:  # 무한루프 시작
@@ -143,12 +154,10 @@ def chat_qa(vectordb, is_debug=False) -> None:
 
     busy_indicator = BusyIndicator().busy(True)
     langchain.is_debug = is_debug
-    result = qa({"question": t})
+    result = qa.run(t)
     langchain.is_debug = False
     busy_indicator.stop()
-    console.out(result['answer'])
-    if is_debug:
-      print_result(result)
+    console.out(result)
 
 
 
@@ -184,20 +193,6 @@ def input_select(menu: dict) -> (int, str):
 
 
 def main():
-  test, _ = input_select({
-    "title" : "테스트할 내용을 선택하세요.",
-    "items" : [
-      "test_memory()",
-      "chat_qa()"
-    ]
-  })
-  db, _ = input_select({
-    "title" : "테스트할 db를 선택하세요.",
-    "items" : [
-      "pdf",
-      "csv"
-    ]
-  })
   debug, _ = input_select({
     "title" : "debugging 모드로 하시겠습니까?",
     "items" : [
@@ -206,28 +201,9 @@ def main():
     ]
   })
 
-  file = PDF_FILE if db == 1 else CSV_FILE
-  busy_indicator = BusyIndicator.busy(True, f"{get_filename_without_extension(file)} db를 로딩 중입니다 ")
-  vectordb : FAISS = load_vectordb_from_file(file)
-  busy_indicator.stop()
   is_debug = debug == 1
 
-
-  if test == 1:
-    questions_pdf = [
-      "프리랜서들이 피해야 할 회사는 어떤 회사인가?",
-      "그 중에는 급여가 적은 회사도 포함되는가?"
-    ]
-    questions_csv = [
-      "Can you recommend a shirt that doesn't wrinkle and is breathable?",
-      "Give me three other recommendations."
-    ]
-    test_memory(vectordb,
-      questions_pdf if db == 1 else questions_csv,
-      is_debug
-    )
-  else:
-    chat_qa(vectordb, is_debug)
+  chat_qa( is_debug)
 
 
 

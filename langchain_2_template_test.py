@@ -36,7 +36,7 @@ load_dotenv()
 def main() -> None:
   chat = ChatOpenAI(temperature=0, model=llm_model) # 번역을 항상 같게 하기 위해서 설정
 
-  template="You are a helpful assisstant that tranlates {input_language} to {output_language}."
+  template="You are a helpful assisstant that tranlates {input_language} to {output_language}." #프롬프트 언어 변경
   system_message_prompt = SystemMessagePromptTemplate.from_template(template)
 
   human_template="{text}"
