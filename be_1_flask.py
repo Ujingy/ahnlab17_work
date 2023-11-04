@@ -7,11 +7,9 @@
 각각 uri 별로 request 값과 result 값이 아래와 같은 서버 프로그램 코드를 작성하고  스웨거를 적용시켜줘.
 flask-restx 를 사용 할 것
 
-/new_token
+/new_token?db=<integer>
 
-request : {
-  db : integer
-}
+request : db : integer
 result : {
   token: string
 }
@@ -54,10 +52,7 @@ api = Api(app, version='1.0', title='LangChain 기반 챗봇 API 서버', descri
 
 ns = api.namespace('api', description='API operations')
 
-# Input Model for /new_token
-token_input_model = api.model('TokenInput', {
-  'db': fields.Integer(description='Database ID', required=True)  # 입력 모델
-})
+
 
 # Output Model for /new_token
 token_output_model = api.model('TokenOutput', {
@@ -77,10 +72,10 @@ result_model = api.model('PromptResult', {
 
 @ns.route('/new_token')
 class NewTokenResource(Resource):
-  @ns.expect(token_input_model)  # 입력 모델 적용
+  @ns.doc(params={'db': 'A database identifier'})
   @ns.marshal_with(token_output_model, mask=False)  # 출력 모델 적용
   def get(self):
-    db_value = request.args.get('db')  # URL query parameter에서 db 값을 가져옵니다.
+    db_value = request.args.get('db', type=int)  # URL query parameter에서 db 값을 가져옵니다.
     # 원하는 db 처리 로직을 여기에 추가하실 수 있습니다.
     return {'token': str(uuid.uuid4())}
 
