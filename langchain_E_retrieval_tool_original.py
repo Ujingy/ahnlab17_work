@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Question Answering
-
 
 import os
 import time
@@ -22,7 +20,6 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 openai.organization = os.getenv("ORGANIZATION")
 sys.path.append(os.getenv("PYTHONPATH"))
-
 llm_model = "gpt-3.5-turbo"
 PDF_FREELANCER_GUIDELINES_FILE = "./data/프리랜서 가이드라인 (출판본).pdf"
 CSV_OUTDOOR_CLOTHING_CATALOG_FILE = "data/OutdoorClothingCatalog_1000.csv"
@@ -38,14 +35,13 @@ from langchain.chat_models import ChatOpenAI
 from utils import (
   BusyIndicator,
   ConsoleInput,
-  get_filename_without_extension,
-  load_pdf_vectordb,
-  load_vectordb_from_file,
-  get_vectordb_path_by_file_path
+  load_vectordb_from_file
   )
 from langchain.chains.router import MultiRetrievalQAChain
 from langchain.llms import OpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.agents.agent_toolkits import create_retriever_tool
+from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 
 import re
 
@@ -91,6 +87,7 @@ def get_personal_retriever() -> VectorStoreRetriever:
     "내가 제일 좋아하는 색은 보라색입니다.",
     "내 꿈은 최고의 인공지능 활용 어플리케이션 개발자가 되는 것입니다.",
     "내 고향은 제주도입니다.",
+    "나는 남성입니다",
     "나는 1972년에 태어났습니다.",
   ]
   personal_retriever = FAISS.from_texts(personal_texts, OpenAIEmbeddings()).as_retriever()
@@ -113,26 +110,25 @@ def get_outdoor_clothing_catalog() -> VectorStoreRetriever:
 
 
 
-def get_chain() :
-  retriever_infos = [
-    {
-        "name": "freelancer guidelines",
-        "description": "Good for answering questions about the different things you need to know about being a freelancer",
-        "retriever": get_freelancer_guidelines()
-    },
-    {
-        "name": "outdoor clothing catalog",
-        "description": "Good for answering questions about outdoor clothing names and features",
-        "retriever": get_outdoor_clothing_catalog()
-    },
-    {
-        "name": "personal",
-        "description": "Good for answering questions about me",
-        "retriever": get_personal_retriever()
-    }
+def get_tools() :
+  tools = [
+    create_retriever_tool(
+      get_freelancer_guidelines(),
+      "freelancer_guidelines",
+      "Good for answering questions about the different things you need to know about being a freelancer",
+    ),
+    create_retriever_tool(
+      get_outdoor_clothing_catalog(),
+      "outdoor_clothing_catalog",
+      "Good for answering questions about outdoor clothing names and features",
+    ),
+    create_retriever_tool(
+      get_personal_retriever(),
+      "personal",
+      "Good for answering questions about me",
+    )
   ]
-  chain = MultiRetrievalQAChain.from_retrievers(OpenAI(), retriever_infos, verbose=True)
-  return chain
+  return tools
 
 
 
@@ -140,9 +136,10 @@ def get_chain() :
 def chat_qa(is_debug=False) -> None:
   console = ConsoleInput(basic_prompt='% ')
   busy_indicator = BusyIndicator().busy(True, "vectordb를 로딩중입니다 ")
-  qa = get_chain()
+  tools = get_tools()
   busy_indicator.stop()
 
+  agent_executor = create_conversational_retrieval_agent(llm, tools, verbose=True)
 
   while True:  # 무한루프 시작
     t = console.input()[0].strip()
@@ -155,10 +152,12 @@ def chat_qa(is_debug=False) -> None:
 
     busy_indicator = BusyIndicator().busy(True)
     langchain.is_debug = is_debug
-    result = qa.run(t)
+    result = agent_executor({"input": t})
     langchain.is_debug = False
     busy_indicator.stop()
-    console.out(result)
+    console.out(result["output"])
+    if is_debug:
+      print_result(result)
 
 
 

@@ -81,7 +81,7 @@ def test_text_small_chunk() -> None:
 from langchain.document_loaders import PyPDFLoader
 
 def test_pdf_split() -> None:
-  loader = PyPDFLoader("./data/프리랜서 가이드라인 (출판본).pdf")
+  loader = PyPDFLoader("./data/프리랜서 가이드라인(출판본).pdf")
   global pages
   pages = loader.load()
   text_splitter = CharacterTextSplitter(

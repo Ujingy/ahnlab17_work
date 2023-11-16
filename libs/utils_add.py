@@ -13,6 +13,7 @@ from langchain.schema.vectorstore import VectorStore
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.schema.embeddings import Embeddings
+import PyPDF2
 
 class ExecutionTimeChecker:
   def __init__(self, with_start: bool = False):
@@ -512,3 +513,28 @@ def load_vectordb_from_file(file: str) -> VectorStore:
 
   vectordb = save_vectordb(OpenAIEmbeddings(), db_path, documents)
   return vectordb
+
+### 추가 함수
+
+def get_pdf_table_of_contents(pdf_path):
+    # PDF 파일 열기
+    with open(pdf_path, 'rb') as file:
+        reader = PyPDF2.PdfFileReader(file)
+
+        # 목차가 있는지 확인
+        if not reader.outlines:
+            return "No table of contents available."
+        
+        # 목차 추출
+        toc = extract_toc_items(reader.outlines)
+        return toc
+
+def extract_toc_items(outlines, toc=[], level=0):
+    for item in outlines:
+        if isinstance(item, list):
+            # 재귀적으로 하위 목차 추출
+            extract_toc_items(item, toc, level + 1)
+        else:
+            # 목차 항목 추가
+            toc.append("  " * level + item.title)
+    return toc

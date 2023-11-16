@@ -21,7 +21,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 openai.organization = os.getenv("ORGANIZATION")
 sys.path.append(os.getenv("PYTHONPATH"))
 llm_model = "gpt-3.5-turbo"
-PDF_FREELANCER_GUIDELINES_FILE = "./data/프리랜서 가이드라인 (출판본).pdf"
+PDF_FREELANCER_GUIDELINES_FILE = "./data/프리랜서 가이드라인(출판본).pdf"
 CSV_OUTDOOR_CLOTHING_CATALOG_FILE = "data/OutdoorClothingCatalog_1000.csv"
 
 from langchain.vectorstores import FAISS
@@ -47,6 +47,8 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.agents.agent_toolkits import create_retriever_tool
 from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
 
+import warnings
+warnings.filterwarnings('ignore')
 
 from langchain.chains.summarize import load_summarize_chain
 
@@ -57,7 +59,21 @@ def main():
   chain = load_summarize_chain(llm, chain_type="map_reduce")
 
   result =  chain.run(docs)
+  #translated_result = translate_to_korean(result)  # 결과를 한글로 번역
+  
+  print("Summarizing...")  
   print(result)
+  #print(translated_result)
+  
+def translate_to_korean(text):
+  response = openai.Translate.create(
+      model="text-davinci-003",  # 번역 모델 선택
+      source_language="en",      # 원본 언어
+      target_language="ko",      # 대상 언어
+      text=text                  # 번역할 텍스트
+  )
+  return response['choices'][0]['text']  # 번역된 텍스트 반환
+
 
 
 """

@@ -27,7 +27,7 @@ openai.organization = os.getenv("ORGANIZATION")
 from langchain.document_loaders import PyPDFLoader
 
 def test_pdf() -> None:
-  file = "./data/프리랜서 가이드라인 (출판본).pdf"
+  file = "./data/프리랜서 가이드라인(출판본).pdf"
   loader = PyPDFLoader(file)
   pages = loader.load()
   print(f"{file} 파일을 로딩했습니다.")
