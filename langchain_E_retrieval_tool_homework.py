@@ -116,44 +116,6 @@ def get_table_of_contents(pdf_file_path):
 
     return table_of_contents
   
-#
-def infer_gender(product_name, product_description):
-    female_keywords = ['women', 'woman', 'female', 'girls', 'girl']
-    male_keywords = ['men', 'man', 'male', 'boys', 'boy']
-    name_desc = product_name.lower() + " " + product_description.lower()
-    if any(keyword in name_desc for keyword in female_keywords):
-        return 'Female'
-    elif any(keyword in name_desc for keyword in male_keywords):
-        return 'Male'
-    else:
-        return 'Unisex'
-
-def infer_season(product_name, product_description):
-    summer_keywords = ['summer', 'hot', 'warm', 'sun']
-    winter_keywords = ['winter', 'cold', 'snow', 'ice']
-    all_season_keywords = ['all season', 'any season', 'all-weather']
-    name_desc = product_name.lower() + " " + product_description.lower()
-    if any(keyword in name_desc for keyword in summer_keywords):
-        return 'Summer'
-    elif any(keyword in name_desc for keyword in winter_keywords):
-        return 'Winter'
-    elif any(keyword in name_desc for keyword in all_season_keywords):
-        return 'All Season'
-    else:
-        return 'General'
-
-# 
-def calculate_product_statistics(catalog_df):
-    # 성별과 계절을 추론하는 로직 적용
-    catalog_df['Inferred Gender'] = catalog_df.apply(lambda row: infer_gender(row['name'], row['description']), axis=1)
-    catalog_df['Inferred Season'] = catalog_df.apply(lambda row: infer_season(row['name'], row['description']), axis=1)
-
-    # 통계 계산
-    gender_counts = catalog_df['Inferred Gender'].value_counts().to_dict()
-    season_counts = catalog_df['Inferred Season'].value_counts().to_dict()
-
-    return gender_counts, season_counts
-  
 
 
 def get_personal_retriever() -> VectorStoreRetriever:
@@ -212,21 +174,25 @@ def get_outdoor_clothing_catalog() -> VectorStoreRetriever:
 def get_outdoor_clothing_stats() -> VectorStoreRetriever:
     catalog_df = pd.read_csv(CSV_OUTDOOR_CLOTHING_CATALOG_FILE)
 
-    # 통계 정보 계산
+    # 데이터 분석하여 상품 정보 개괄 및 통계 정보 생성 (예: 총 상품수, 성별 의류수, 계절별 의류수 등)
     total_products = len(catalog_df)
-    gender_counts, season_counts = calculate_product_statistics(catalog_df)
+    # 여기에 추가적인 통계 정보를 계산하는 코드를 추가
 
-    # 통계 정보를 문자열로 변환하여 상품 정보 개괄 및 통계 정보 생성
-    stats_info = f"안녕하세요. 아웃도어 전문 매장입니다. 현재 저희는 {total_products}개의 제품을 다루고 있습니다. 성별 의류 수: {gender_counts}, 계절별 의류 수: {season_counts}."
+    stats_info = f"안녕하세요. 아웃도어 전문 매장입니다. 현재 저희는 {total_products}개의 제품을 다루고 있으며, 필요한 제품을 자동으로 안내해드리고 있습니다."
 
-    # 임베딩 및 VectorStoreRetriever 생성
+    # 임베딩 함수 준비
     embedding = OpenAIEmbeddings()
+
+    # 임베딩 함수와 함께 FAISS 인스턴스 생성
     vectorstore = FAISS.from_texts([stats_info], embedding)
+
+    # 상품 정보 개괄 및 통계 정보를 vectorstore에 추가
     vectorstore.add_texts([stats_info])
+
+    # 채워진 vectorstore를 사용하여 VectorStoreRetriever 인스턴스 생성
     retriever = VectorStoreRetriever(vectorstore=vectorstore)
 
     return retriever
-
 
 
 

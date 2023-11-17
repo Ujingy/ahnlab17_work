@@ -44,6 +44,7 @@ import openai
 from langchain.chat_models import ChatOpenAI
 from langchain_E_retrieval_tool import get_tools
 from langchain.agents.agent_toolkits import create_conversational_retrieval_agent
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -60,6 +61,15 @@ llm = ChatOpenAI(model_name=llm_model, temperature=0)
 is_debug = True
 app = FastAPI(debug=is_debug, docs_url="/api-docs")
 
+# CORS 설정 추가
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 모든 도메인을 허용하는 예시 설정
+    allow_credentials=True,
+    allow_methods=["*"],  # 모든 메소드를 허용하는 예시 설정
+    allow_headers=["*"],  # 모든 헤더를 허용하는 예시 설정
+)
+
 
 class TokenOutput(BaseModel):
   token: str
@@ -72,6 +82,8 @@ class PromptRequest(BaseModel):
 
 class PromptResult(BaseModel):
   result: str
+
+
 
 
 # @app.get("/")
