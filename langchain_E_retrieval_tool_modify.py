@@ -79,6 +79,24 @@ def print_result(result: Any) -> None:
   if 'source_documents' in result:
     print("documents")
     print_documents(result['source_documents'])
+    
+# 문서 출력 함수에 총 페이지 수 출력 로직 추가
+def print_documents(docs: List[Any]) -> None:
+    if docs == None or len(docs) == 0:
+        return
+
+    print(f"documents size: {len(docs)}")
+    # 첫 번째 문서의 total_pages 값을 사용
+    total_pages = docs[0].metadata.get('total_pages', 0)  
+    print(f"Total pages in all documents: {total_pages}")
+
+    p = lambda meta, key: print(f"{key}: {meta[key]}") if key in meta else None
+    for doc in docs:
+        print(f"source : {doc.metadata['source']}")
+        p(doc.metadata, 'row')
+        p(doc.metadata, 'page')
+        print(f"content: {reduce_newlines(doc.page_content)[0:500]}")
+        print('-'*30)
 
 llm_model = "gpt-3.5-turbo"
 PDF_FREELANCER_GUIDELINES_FILE = "./data/프리랜서 가이드라인(출판본).pdf"
@@ -101,7 +119,6 @@ def get_freelancer_guidelines_summary() -> VectorStoreRetriever:
     
     return retriever
   
-#목차 추출
 def get_table_of_contents(pdf_file_path):
     loader = PyPDFLoader(pdf_file_path)
     pages = loader.load()
@@ -109,23 +126,59 @@ def get_table_of_contents(pdf_file_path):
     table_of_contents = []
     for page in pages:
         text = page.page_content
-        # 목차를 식별하고 추출하는 로직 구현
-        # 예시: 특정 키워드나 패턴을 찾아 목차 식별
         if "목차" in text or "CHAPTER" in text:
             table_of_contents.append(text)
 
-    return table_of_contents
+    total_pages = len(pages)  # 총 페이지 수 계산
+    return table_of_contents, total_pages
+  
+#
+def infer_gender(product_name, product_description):
+    female_keywords = ['women', 'woman', 'female', 'girls', 'girl']
+    male_keywords = ['men', 'man', 'male', 'boys', 'boy']
+    name_desc = product_name.lower() + " " + product_description.lower()
+    if any(keyword in name_desc for keyword in female_keywords):
+        return 'Female'
+    elif any(keyword in name_desc for keyword in male_keywords):
+        return 'Male'
+    else:
+        return 'Unisex'
+
+def infer_season(product_name, product_description):
+    summer_keywords = ['summer', 'hot', 'warm', 'sun']
+    winter_keywords = ['winter', 'cold', 'snow', 'ice']
+    all_season_keywords = ['all season', 'any season', 'all-weather']
+    name_desc = product_name.lower() + " " + product_description.lower()
+    if any(keyword in name_desc for keyword in summer_keywords):
+        return 'Summer'
+    elif any(keyword in name_desc for keyword in winter_keywords):
+        return 'Winter'
+    elif any(keyword in name_desc for keyword in all_season_keywords):
+        return 'All Season'
+    else:
+        return 'General'
+
+# 
+def calculate_product_statistics(catalog_df):
+    # 성별과 계절을 추론하는 로직 적용
+    catalog_df['Inferred Gender'] = catalog_df.apply(lambda row: infer_gender(row['name'], row['description']), axis=1)
+    catalog_df['Inferred Season'] = catalog_df.apply(lambda row: infer_season(row['name'], row['description']), axis=1)
+
+    # 통계 계산
+    gender_counts = catalog_df['Inferred Gender'].value_counts().to_dict()
+    season_counts = catalog_df['Inferred Season'].value_counts().to_dict()
+
+    return gender_counts, season_counts
   
 
 
 def get_personal_retriever() -> VectorStoreRetriever:
   personal_texts = [
-    "내 이름은 홍길동입니다.",
-    "내가 제일 좋아하는 색은 보라색입니다.",
-    "내 꿈은 최고의 인공지능 활용 어플리케이션 개발자가 되는 것입니다.",
-    "내 고향은 제주도입니다.",
-    "나는 남성입니다",
-    "나는 1972년에 태어났습니다.",
+    "내 이름은 안랩샘아카데미17기 연습용 챗봇입니다.",
+    "내가 제일 좋아하는 색은 연초록색입니다.",
+    "내 꿈은 안랩샘아카데미17기 연습용 챗봇으로 여러분에게 도움을 되는 것입니다.",
+    "나는 2023년 안랩샘아카데미17기 ChatGPT활용 챗봇 개발교육 과정에서 탄생했습니다.",
+    "나는 현재 .PDF파일과 .csv파일 두 가지 타입의 데이터를 학습하여 답변을 하고 있습니다.",
   ]
   personal_retriever = FAISS.from_texts(personal_texts, OpenAIEmbeddings()).as_retriever()
   if not isinstance(personal_retriever, VectorStoreRetriever):
@@ -133,11 +186,21 @@ def get_personal_retriever() -> VectorStoreRetriever:
   return personal_retriever
 
 
+# get_freelancer_guidelines 함수 수정
 def get_freelancer_guidelines() -> VectorStoreRetriever:
-  retriever = load_vectordb_from_file(PDF_FREELANCER_GUIDELINES_FILE).as_retriever()
-  if not isinstance(retriever, VectorStoreRetriever):
-    raise ValueError("it's not VectorStoreRetriever")
-  return retriever
+    documents = load_pdf(PDF_FREELANCER_GUIDELINES_FILE)
+    embedding = OpenAIEmbeddings()
+
+    # 문서 내용에 대한 벡터 생성 및 저장
+    texts = [doc.page_content for doc in documents]
+    vectorstore = FAISS.from_texts(texts, embedding)
+
+    # VectorStoreRetriever 생성 및 반환
+    retriever = VectorStoreRetriever(vectorstore=vectorstore)
+    return retriever
+
+
+
 
 def get_freelancer_guidelines_summary() -> VectorStoreRetriever:
   retriever = load_vectordb_from_file(PDF_FREELANCER_GUIDELINES_FILE).as_retriever()
@@ -146,19 +209,19 @@ def get_freelancer_guidelines_summary() -> VectorStoreRetriever:
   return retriever
 
 def get_table_of_contents_retriever() -> VectorStoreRetriever:
-    # 목차 정보를 추출
-    table_of_contents_texts = get_table_of_contents(PDF_FREELANCER_GUIDELINES_FILE)
-    
-    # 파일로부터 FAISS 벡터 데이터베이스 로드
-    vectorstore = load_vectordb_from_file(PDF_FREELANCER_GUIDELINES_FILE)
+    table_of_contents, _ = get_table_of_contents(PDF_FREELANCER_GUIDELINES_FILE)
+
+    # 임베딩 함수 준비
+    embedding = OpenAIEmbeddings()
+
+    # 임베딩 함수와 함께 FAISS 인스턴스 생성
+    # 빈 문자열이나 None 값을 제외하고 contents 리스트를 구성
+    contents = [item for item in table_of_contents if item and isinstance(item, str)]
+    vectorstore = FAISS.from_texts(contents, embedding)
 
     # 추출된 텍스트를 vectorstore에 추가
-    for content in table_of_contents_texts:
-        # 정규 표현식을 사용하여 페이지 번호를 추출합니다.
-        page_numbers = re.findall(r'(\d+)[^\d]+$', content, re.MULTILINE)
-        for page_number in page_numbers:
-            # 페이지 번호를 메타데이터로 추가하여 vectorstore에 텍스트 추가
-            vectorstore.add_text(content, meta={'page': int(page_number)})
+    for item in contents:
+        vectorstore.add_texts([item])
 
     # 채워진 vectorstore를 사용하여 VectorStoreRetriever 인스턴스 생성
     retriever = VectorStoreRetriever(vectorstore=vectorstore)
@@ -175,25 +238,21 @@ def get_outdoor_clothing_catalog() -> VectorStoreRetriever:
 def get_outdoor_clothing_stats() -> VectorStoreRetriever:
     catalog_df = pd.read_csv(CSV_OUTDOOR_CLOTHING_CATALOG_FILE)
 
-    # 데이터 분석하여 상품 정보 개괄 및 통계 정보 생성 (예: 총 상품수, 성별 의류수, 계절별 의류수 등)
+    # 통계 정보 계산
     total_products = len(catalog_df)
-    # 여기에 추가적인 통계 정보를 계산하는 코드를 추가
+    gender_counts, season_counts = calculate_product_statistics(catalog_df)
 
-    stats_info = f"안녕하세요. 아웃도어 전문 매장입니다. 현재 저희는 {total_products}개의 제품을 다루고 있으며, 필요한 제품을 자동으로 안내해드리고 있습니다."
+    # 통계 정보를 문자열로 변환하여 상품 정보 개괄 및 통계 정보 생성
+    stats_info = f"안녕하세요. 아웃도어 전문 매장입니다. 현재 저희는 {total_products}개의 제품을 다루고 있습니다. 성별 의류 수: {gender_counts}, 계절별 의류 수: {season_counts}."
 
-    # 임베딩 함수 준비
+    # 임베딩 및 VectorStoreRetriever 생성
     embedding = OpenAIEmbeddings()
-
-    # 임베딩 함수와 함께 FAISS 인스턴스 생성
     vectorstore = FAISS.from_texts([stats_info], embedding)
-
-    # 상품 정보 개괄 및 통계 정보를 vectorstore에 추가
     vectorstore.add_texts([stats_info])
-
-    # 채워진 vectorstore를 사용하여 VectorStoreRetriever 인스턴스 생성
     retriever = VectorStoreRetriever(vectorstore=vectorstore)
 
     return retriever
+
 
 
 

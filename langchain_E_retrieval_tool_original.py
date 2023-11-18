@@ -83,12 +83,11 @@ llm = ChatOpenAI(model_name=llm_model, temperature=0)
 
 def get_personal_retriever() -> VectorStoreRetriever:
   personal_texts = [
-    "내 이름은 홍길동입니다.",
-    "내가 제일 좋아하는 색은 보라색입니다.",
-    "내 꿈은 최고의 인공지능 활용 어플리케이션 개발자가 되는 것입니다.",
-    "내 고향은 제주도입니다.",
-    "나는 남성입니다",
-    "나는 1972년에 태어났습니다.",
+    "내 이름은 안랩샘아카데미17기 연습용 챗봇입니다.",
+    "내가 제일 좋아하는 색은 연초록색입니다.",
+    "내 꿈은 안랩샘아카데미17기 연습용 챗봇으로 여러분에게 도움을 되는 것입니다.",
+    "나는 2023년 안랩샘아카데미17기 ChatGPT활용 챗봇 개발교육 과정에서 탄생했습니다.",
+    "나는 현재 .PDF파일과 .csv파일 두 가지 타입의 데이터를 학습하여 답변을 하고 있습니다.",
   ]
   personal_retriever = FAISS.from_texts(personal_texts, OpenAIEmbeddings()).as_retriever()
   if not isinstance(personal_retriever, VectorStoreRetriever):
