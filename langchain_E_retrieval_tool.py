@@ -97,28 +97,11 @@ def get_page_count_document() -> Document:
     return Document(page_content=content, metadata=metadata, type="Document")
 
 
-
-
 llm_model = "gpt-3.5-turbo-1106"
 PDF_FREELANCER_GUIDELINES_FILE = "./data/프리랜서 가이드라인(출판본).pdf"
 CSV_OUTDOOR_CLOTHING_CATALOG_FILE = "./data/OutdoorClothingCatalog_1000.csv"
 
 llm = ChatOpenAI(model_name=llm_model, temperature=0)
-
-def get_freelancer_guidelines_summary() -> VectorStoreRetriever:
-    # Load the freelancer guidelines document
-    docs = load_pdf(PDF_FREELANCER_GUIDELINES_FILE)
-    
-    # Summarize the content using TextRank algorithm
-    chain = load_summarize_chain(llm, chain_type="map_reduce")
-    summary = chain.run(docs)
-    
-    # Create a VectorStoreRetriever and add the summarized content as a document
-    retriever = VectorStoreRetriever()
-    document = Document("Summary", summary)
-    retriever.add_document(document)
-    
-    return retriever
 
 #목차 추출
 def get_table_of_contents(pdf_file_path):
@@ -188,7 +171,21 @@ def get_personal_retriever() -> VectorStoreRetriever:
     raise ValueError("personal_retriever is not VectorStoreRetriever")
   return personal_retriever
 
-
+def get_freelancer_guidelines_summary() -> VectorStoreRetriever:
+    # Load the freelancer guidelines document
+    docs = load_pdf(PDF_FREELANCER_GUIDELINES_FILE)
+    
+    # Summarize the content using TextRank algorithm
+    chain = load_summarize_chain(llm, chain_type="map_reduce")
+    summary = chain.run(docs)
+    
+    # Create a VectorStoreRetriever and add the summarized content as a document
+    retriever = VectorStoreRetriever()
+    document = Document("Summary", summary)
+    retriever.add_document(document)
+    
+    return retriever
+  
 def get_freelancer_guidelines() -> VectorStoreRetriever:
   retriever = load_vectordb_from_file(PDF_FREELANCER_GUIDELINES_FILE).as_retriever()
   if not isinstance(retriever, VectorStoreRetriever):
