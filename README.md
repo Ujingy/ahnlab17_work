@@ -14,13 +14,16 @@
     • 환경 변수에서 OpenAI API 키와 조직을 설정합니다.   
     • Langchain의 ChatOpenAI 클래스의 인스턴스를 생성합니다.   
     • get_freelancer_guidelines_summary() 함수를 사용하여 프리랜서 가이드라인의 요약 정보를 가져옵니다.   
+    • get_total_page_count() 총 페이지 수를 계산하는 함수   
+    • get_page_count_document() 계산된 페이지 수를 문서화   
     • get_table_of_contents() 함수를 사용하여 프리랜서 가이드라인의 목차를 추출합니다.   
     • infer_gender() 함수를 사용하여 제품의 성별을 추론합니다.   
     • infer_season() 함수를 사용하여 제품의 계절을 추론합니다.   
     • calculate_product_statistics() 함수를 사용하여 제품 통계를 계산합니다.   
     • get_personal_retriever() 함수를 사용하여 개인 정보를 가져옵니다.   
     • get_freelancer_guidelines() 함수를 사용하여 프리랜서 가이드라인을 가져옵니다.   
-    • get_freelancer_guidelines_summary() 함수를 사용하여 프리랜서 가이드라인의 요약 정보를 가져옵니다.  
+    • get_freelancer_guidelines_summary() 함수를 사용하여 프리랜서 가이드라인의 요약 정보를 가져옵니다.   
+    • get_page_count_retriever() 함수를 사용하여 프리랜서 가이드라인의 총 페이지 수를 가져옵니다.   
     • get_table_of_contents_retriever() 함수를 사용하여 프리랜서 가이드라인의 목차를 가져옵니다.   
     • get_outdoor_clothing_catalog() 함수를 사용하여 아웃도어 의류 카탈로그를 가져옵니다.   
     • get_outdoor_clothing_stats() 함수를 사용하여 아웃도어 의류 카탈로그의 통계 정보를 가져옵니다.   
