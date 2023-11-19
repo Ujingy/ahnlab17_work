@@ -22,7 +22,7 @@
     • calculate_product_statistics() 함수를 사용하여 제품 통계를 계산합니다.   
     • get_personal_retriever() 함수를 사용하여 개인 정보를 가져옵니다.   
     • get_freelancer_guidelines() 함수를 사용하여 프리랜서 가이드라인을 가져옵니다.   
-    • get_freelancer_guidelines_summary() 함수를 사용하여 프리랜서 가이드라인의 요약 정보를 가져옵니다.
+    • get_freelancer_guidelines_summary() 함수를 사용하여 프리랜서 가이드라인의 요약 정보를 가져옵니다.   
     • get_page_count_retriever() 함수를 사용하여 프리랜서 가이드라인의 총 페이지 수를 가져옵니다.   
     • get_table_of_contents_retriever() 함수를 사용하여 프리랜서 가이드라인의 목차를 가져옵니다.   
     • get_outdoor_clothing_catalog() 함수를 사용하여 아웃도어 의류 카탈로그를 가져옵니다.   
