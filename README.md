@@ -13,7 +13,7 @@
     - from langchain.document_loaders import PyPDFLoader (추가)   
     • 환경 변수에서 OpenAI API 키와 조직을 설정합니다.   
     • Langchain의 ChatOpenAI 클래스의 인스턴스를 생성합니다.   
-    • get_freelancer_guidelines_summary() 함수를 사용하여 프리랜서 가이드라인의 요약 정보를 가져옵니다.
+    • get_freelancer_guidelines_summary() 함수를 사용하여 프리랜서 가이드라인의 요약 정보를 가져옵니다.   
     • get_total_page_count() 총 페이지 수를 계산하는 함수   
     • get_page_count_document() 계산된 페이지 수를 문서화   
     • get_table_of_contents() 함수를 사용하여 프리랜서 가이드라인의 목차를 추출합니다.   
