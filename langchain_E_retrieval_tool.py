@@ -7,6 +7,7 @@ import time
 import json
 import sys
 from typing import Any, Iterable, List
+from PyPDF2 import PdfReader
 import langchain
 from langchain.docstore.document import Document
 
@@ -79,8 +80,26 @@ def print_result(result: Any) -> None:
   if 'source_documents' in result:
     print("documents")
     print_documents(result['source_documents'])
+    
 
-llm_model = "gpt-3.5-turbo"
+# 총 페이지 수를 계산하는 함수
+def get_total_page_count(pdf_file_path) -> int:
+    reader = PdfReader(pdf_file_path)
+    return len(reader.pages)
+  
+# 계산된 페이지 수를 문서화
+def get_page_count_document() -> Document:
+    page_count = get_total_page_count(PDF_FREELANCER_GUIDELINES_FILE)
+    content = f"The total page count of the document is {page_count}."
+    metadata = {"description": "Page count information"}
+
+    # `type` 속성을 "Document"로 고정
+    return Document(page_content=content, metadata=metadata, type="Document")
+
+
+
+
+llm_model = "gpt-3.5-turbo-1106"
 PDF_FREELANCER_GUIDELINES_FILE = "./data/프리랜서 가이드라인(출판본).pdf"
 CSV_OUTDOOR_CLOTHING_CATALOG_FILE = "./data/OutdoorClothingCatalog_1000.csv"
 
@@ -100,7 +119,7 @@ def get_freelancer_guidelines_summary() -> VectorStoreRetriever:
     retriever.add_document(document)
     
     return retriever
-  
+
 #목차 추출
 def get_table_of_contents(pdf_file_path):
     loader = PyPDFLoader(pdf_file_path)
@@ -182,6 +201,19 @@ def get_freelancer_guidelines_summary() -> VectorStoreRetriever:
     raise ValueError("it's not VectorStoreRetriever")
   return retriever
 
+# 총 페이지 계산
+def get_page_count_retriever() -> VectorStoreRetriever:
+    page_count_doc = get_page_count_document()
+    embedding = OpenAIEmbeddings()
+
+    # 'page_content' 속성을 사용하여 텍스트를 가져옵니다
+    vectorstore = FAISS.from_texts([page_count_doc.page_content], embedding)
+    vectorstore.add_texts([page_count_doc.page_content])
+
+    retriever = VectorStoreRetriever(vectorstore=vectorstore)
+    return retriever
+
+
 def get_table_of_contents_retriever() -> VectorStoreRetriever:
     table_of_contents = get_table_of_contents(PDF_FREELANCER_GUIDELINES_FILE)
 
@@ -240,6 +272,11 @@ def get_tools() :
       get_freelancer_guidelines_summary(),
       "freelancer_guidelines",
       "Good for answering questions about summarize the full contents of your freelance guidelines",
+    ),
+    create_retriever_tool(
+            get_page_count_retriever(),
+            "page_count",
+            "Provides the total page count of the Freelancer Guidelines document"
     ),
     create_retriever_tool(
         get_table_of_contents_retriever(),
